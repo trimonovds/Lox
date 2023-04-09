@@ -58,7 +58,11 @@ struct Token {
 }
 
 struct Scanner {
-    var scanTokens: (String) -> Res<[Token], Err> 
+    struct Result {
+        var tokens: [Token]
+        var errors: [Err]
+    }
+    var scanTokens: (String) -> Result
 }
 
 extension Scanner {
@@ -67,7 +71,8 @@ extension Scanner {
             var start = source.startIndex 
             var current = source.startIndex
             var line = 1
-            var tokens: [Token] = []
+            var tokens = [Token]()
+            var errors = [Err]()
 
             func isAtEnd() -> Bool {
                 return current == source.endIndex 
@@ -79,54 +84,49 @@ extension Scanner {
                 return char 
             }
 
-            func makeToken(_ type: TokenType, literal: Any? = nil) -> Token {
+            func addToken(_ type: TokenType, literal: Any? = nil) {
                 let text = String(source[start ..< current])
-                return Token(type: type, lexeme: text, literal: literal, line: line)
+                tokens.append(Token(type: type, lexeme: text, literal: literal, line: line))
             }
 
-            func makeToken(_ type: TokenType) -> Token {
-                makeToken(type, literal: nil)
+            func addToken(_ type: TokenType) {
+                addToken(type, literal: nil)
             }
 
-            func scanToken() -> Res<Token, Err> {
+            func scanToken() {
                 let c = advance()
                 switch c {
                 case "(":
-                    return .success(makeToken(.leftParen))
+                    addToken(.leftParen)
                 case ")":
-                    return .success(makeToken(.rightParen))
+                    addToken(.rightParen)
                 case "{":
-                    return .success(makeToken(.leftBrace))
+                    addToken(.leftBrace)
                 case "}":
-                    return .success(makeToken(.rightBrace))
+                    addToken(.rightBrace)
                 case ",":
-                    return .success(makeToken(.comma))
+                    addToken(.comma)
                 case ".":
-                    return .success(makeToken(.dot))
+                    addToken(.dot)
                 case "-":
-                    return .success(makeToken(.minus))
+                    addToken(.minus)
                 case "+":
-                    return .success(makeToken(.plus))
+                    addToken(.plus)
                 case ";":
-                    return .success(makeToken(.semicolon))
+                    addToken(.semicolon)
                 case "*":
-                    return .success(makeToken(.star))
+                    addToken(.star)
                 default:
-                    return .failure(Err(line: line, message: "Unexpected character '\(c)'"))
+                    errors.append(Err(line: line, message: "Unexpected character '\(c)'"))
                 }
             }
             while !isAtEnd() {
                 // We are at the beginning of the next lexeme.
                 start = current
-                switch scanToken() {
-                case .success(let token):
-                    tokens.append(token)
-                case let .failure(err):
-                    return .failure(err)
-                }
+                scanToken()
             }
             tokens.append(Token(type: .eof, lexeme: "", literal: nil, line: line))
-            return .success(tokens)
+            return Result(tokens: tokens, errors: errors) 
         })
     }
 }

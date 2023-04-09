@@ -24,12 +24,9 @@ public enum Lox {
     private static func runFile(_ path: String) throws {
         let url = URL(fileURLWithPath: path)
         let content = try String(contentsOf: url)
-        let result = run(source: content)
-        switch result {
-        case .success:
-            exit(0)
-        case let .failure(err):
-            errorReporter.report(err)
+        let errors = run(source: content)
+        errorReporter.report(errors: errors)
+        if !errors.isEmpty {
             exit(65)
         }
     }
@@ -43,23 +40,19 @@ public enum Lox {
             if line == "exit" {
                 exit(0)
             } else {
-                _ = run(source: line)
+                let errors = run(source: line)
+                errorReporter.report(errors: errors)
             }
         }
     }
 
-    private static func run(source: String) -> Res<Void, Err> {
-        let scanResult = Scanner.live.scanTokens(source)
-        switch scanResult {
-        case let .success(tokens):
-            print("Tokens:\n")
-            for token in tokens {
-                print(token)
-            }
-            return .success(())
-        case let .failure(err):
-            return .failure(err)
+    private static func run(source: String) -> [Err] {
+        let scannerResult = Scanner.live.scanTokens(source)
+        print("Tokens:\n")
+        for token in scannerResult.tokens {
+            print(token)
         }
+        return scannerResult.errors
     }
 }
 
@@ -79,6 +72,12 @@ struct ErrorReporter {
 }
 
 extension ErrorReporter {
+    func report(errors: [Err]) {
+        for err in errors {
+            report(err)
+        }
+    }
+
     static var live: ErrorReporter {
         return ErrorReporter(report: { err in
             print("[line " + "\(err.line)" + "] Error" + err.position + ": " + err.message)
