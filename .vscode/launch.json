@@ -1,0 +1,28 @@
+{
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "sourceLanguages": [
+                "swift"
+            ],
+            "name": "Debug Lox",
+            "program": "${workspaceFolder:Lox}/.build/debug/Lox",
+            "args": [],
+            "cwd": "${workspaceFolder:Lox}",
+            "preLaunchTask": "swift: Build Debug Lox"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "sourceLanguages": [
+                "swift"
+            ],
+            "name": "Release Lox",
+            "program": "${workspaceFolder:Lox}/.build/release/Lox",
+            "args": [],
+            "cwd": "${workspaceFolder:Lox}",
+            "preLaunchTask": "swift: Build Release Lox"
+        }
+    ]
+}
